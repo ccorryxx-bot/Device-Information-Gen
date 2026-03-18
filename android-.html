@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Android Device Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0e1a;--panel:#0f1628;--border:#1e2d4a;
+    --accent:#00d4ff;--accent2:#7b2fff;--text:#c8daf0;
+    --dim:#4a6080;--green:#00ff88;
+    --mono:'Share Tech Mono',monospace;--head:'Exo 2',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--bg);color:var(--text);font-family:var(--mono);
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;
+    padding:30px 16px;
+    background-image:
+      radial-gradient(ellipse at 20% 0%,rgba(0,212,255,.06) 0%,transparent 60%),
+      radial-gradient(ellipse at 80% 100%,rgba(123,47,255,.06) 0%,transparent 60%);
+  }
+  header{text-align:center;margin-bottom:28px;}
+  header h1{
+    font-family:var(--head);font-weight:800;
+    font-size:clamp(1.4rem,4vw,2rem);letter-spacing:.12em;text-transform:uppercase;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  }
+  header p{font-size:.7rem;color:var(--dim);letter-spacing:.2em;margin-top:5px;text-transform:uppercase;}
+
+  .controls{
+    display:flex;gap:10px;margin-bottom:8px;
+    flex-wrap:wrap;justify-content:center;width:100%;max-width:700px;
+  }
+  .bwrap{position:relative;flex:1;min-width:180px;}
+  .bwrap input{
+    width:100%;background:var(--panel);border:1px solid var(--border);
+    color:var(--text);font-family:var(--mono);font-size:.82rem;
+    padding:10px 14px;border-radius:6px;outline:none;transition:border-color .2s;
+  }
+  .bwrap input:focus{border-color:var(--accent);}
+  .bwrap input::placeholder{color:var(--dim);}
+  .sugs{
+    position:absolute;top:calc(100% + 4px);left:0;right:0;
+    background:#111c30;border:1px solid var(--border);
+    border-radius:6px;z-index:100;display:none;overflow:hidden;
+  }
+  .sugs.show{display:block;}
+  .sug{padding:8px 14px;font-size:.78rem;cursor:pointer;color:var(--text);transition:background .15s;}
+  .sug:hover,.sug.on{background:rgba(0,212,255,.1);color:var(--accent);}
+
+  select{
+    background:var(--panel);border:1px solid var(--border);color:var(--text);
+    font-family:var(--mono);font-size:.78rem;padding:10px 14px;
+    border-radius:6px;outline:none;cursor:pointer;
+  }
+  select:focus{border-color:var(--accent);}
+  .btn{
+    font-family:var(--head);font-weight:600;font-size:.82rem;
+    letter-spacing:.1em;text-transform:uppercase;
+    padding:10px 22px;border-radius:6px;border:none;cursor:pointer;transition:all .18s;
+  }
+  .bp{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;}
+  .bp:hover{opacity:.85;transform:translateY(-1px);}
+  .bs{background:transparent;border:1px solid var(--border);color:var(--dim);}
+  .bs:hover{border-color:var(--accent);color:var(--accent);}
+
+  .hint{font-size:.65rem;color:var(--dim);text-align:center;margin-bottom:20px;letter-spacing:.08em;}
+  .hint span{color:var(--accent);}
+  .ctr{font-size:.68rem;color:var(--dim);text-align:center;margin-bottom:20px;letter-spacing:.1em;}
+  .ctr b{color:var(--accent);font-weight:normal;}
+
+  .cards{width:100%;max-width:780px;display:flex;flex-direction:column;gap:14px;}
+  .card{
+    background:var(--panel);border:1px solid var(--border);
+    border-radius:10px;overflow:hidden;animation:fi .28s ease;position:relative;
+  }
+  @keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  .ch{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:11px 16px;border-bottom:1px solid var(--border);background:rgba(0,212,255,.04);
+  }
+  .cnum{font-family:var(--head);font-size:.75rem;color:var(--dim);font-weight:600;letter-spacing:.05em;min-width:28px;}
+  .ct{font-family:var(--head);font-weight:700;font-size:.95rem;color:#fff;}
+  .cbadge{
+    font-size:.62rem;padding:3px 9px;border-radius:20px;
+    font-family:var(--head);font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  }
+
+  table{width:100%;border-collapse:collapse;}
+  table tr{border-bottom:1px solid rgba(30,45,74,.45);}
+  table tr:last-child{border-bottom:none;}
+  table td{padding:6px 16px;vertical-align:middle;}
+  td.k{font-size:.62rem;color:#ff5555;text-transform:uppercase;letter-spacing:.09em;white-space:nowrap;width:130px;}
+  td.v{font-size:.76rem;color:var(--text);word-break:break-all;}
+  td.v.hi{color:var(--accent);}
+  td.v.fp{color:#7a90b8;font-size:.67rem;}
+  td.ac{width:54px;text-align:right;padding-left:4px;}
+
+  .cp{
+    background:transparent;border:1px solid #00aa55;color:#00cc66;
+    font-family:var(--mono);font-size:.75rem;padding:6px 12px;
+    border-radius:4px;cursor:pointer;transition:all .15s;white-space:nowrap;
+  }
+  .cp:hover{border-color:var(--green);color:var(--green);}
+  .cp.ok{border-color:var(--green);color:var(--green);}
+
+  .cf{
+    display:flex;gap:8px;padding:9px 16px;
+    border-top:1px solid var(--border);justify-content:flex-end;
+  }
+  .empty{
+    text-align:center;padding:60px 20px;color:var(--dim);
+    font-size:.82rem;letter-spacing:.1em;
+  }
+  .empty svg{margin:0 auto 14px;display:block;opacity:.25;}
+
+  .toast{
+    position:fixed;bottom:22px;right:22px;
+    background:var(--green);color:#000;
+    font-family:var(--head);font-weight:700;font-size:.78rem;
+    padding:9px 16px;border-radius:6px;
+    opacity:0;transform:translateY(8px);transition:all .22s;
+    pointer-events:none;letter-spacing:.08em;
+  }
+  .toast.show{opacity:1;transform:translateY(0);}
+  .sl{
+    position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,transparent,var(--accent),transparent);
+    animation:sc 1.2s ease forwards;pointer-events:none;
+  }
+  @keyframes sc{0%{top:0;opacity:1}100%{top:100%;opacity:0}}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚡ Android Device Generator</h1>
+  <p>Real Device · Display ID &amp; Fingerprint 100% Unique · No Repeat</p>
+</header>
+
+<div class="controls">
+  <div class="bwrap">
+    <input id="bInput" type="text" placeholder="Type brand: Redmi, Samsung, Pixel …"
+      autocomplete="off" oninput="onType()" onkeydown="onKey(event)"/>
+    <div class="sugs" id="sugs"></div>
+  </div>
+  <select id="cnt">
+    <option value="1">1 Device</option>
+    <option value="3" selected>3 Devices</option>
+    <option value="5">5 Devices</option>
+    <option value="10">10 Devices</option>
+  </select>
+  <button class="btn bp" onclick="gen()">⚡ Generate</button>
+  <button class="btn bs" onclick="clr()">✕ Clear</button>
+</div>
+
+<div class="hint" id="hint">Brand: <span>All</span> · Leave blank for all brands</div>
+<div class="ctr" id="ctr">Generated: <b>0</b> devices this session</div>
+
+<div class="cards" id="grid">
+  <div class="empty">
+    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <rect x="5" y="2" width="14" height="20" rx="2"/>
+      <line x1="12" y1="18" x2="12.01" y2="18"/>
+    </svg>
+    Type a brand name (or leave blank) then press Generate
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const DB=[
+  // Samsung
+  {board:"msmnile",   cpuMfr:"Qualcomm", cpu:"Snapdragon 855",      dev:"beyond2",     model:"SM-G975F",   name:"Galaxy S10+",          mfr:"samsung",  brand:"Samsung"},
+  {board:"lahaina",   cpuMfr:"Qualcomm", cpu:"Snapdragon 888",      dev:"p3s",          model:"SM-G998B",   name:"Galaxy S21 Ultra 5G",  mfr:"samsung",  brand:"Samsung"},
+  {board:"r8q",       cpuMfr:"Qualcomm", cpu:"Snapdragon 865+",     dev:"r8q",          model:"SM-N986B",   name:"Galaxy Note20 Ultra",  mfr:"samsung",  brand:"Samsung"},
+  {board:"exynos2100",cpuMfr:"Samsung",  cpu:"Exynos 2100",         dev:"o1s",          model:"SM-G991B",   name:"Galaxy S21 5G",        mfr:"samsung",  brand:"Samsung"},
+  {board:"exynos990", cpuMfr:"Samsung",  cpu:"Exynos 990",          dev:"x1s",          model:"SM-G981B",   name:"Galaxy S20 5G",        mfr:"samsung",  brand:"Samsung"},
+  {board:"sdm845",    cpuMfr:"Qualcomm", cpu:"Snapdragon 845",      dev:"starlte",      model:"SM-G960F",   name:"Galaxy S9",            mfr:"samsung",  brand:"Samsung"},
+  {board:"exynos1280",cpuMfr:"Samsung",  cpu:"Exynos 1280",         dev:"a53x",         model:"SM-A536B",   name:"Galaxy A53 5G",        mfr:"samsung",  brand:"Samsung"},
+  {board:"mt6769t",   cpuMfr:"MediaTek", cpu:"Helio G80",           dev:"a32",          model:"SM-A325F",   name:"Galaxy A32",           mfr:"samsung",  brand:"Samsung"},
+  {board:"kalama",    cpuMfr:"Qualcomm", cpu:"Snapdragon 8 Gen 2",  dev:"dm3q",         model:"SM-S918B",   name:"Galaxy S23 Ultra",     mfr:"samsung",  brand:"Samsung"},
+  {board:"exynos2200",cpuMfr:"Samsung",  cpu:"Exynos 2200",         dev:"q4q",          model:"SM-F936B",   name:"Galaxy Z Fold4",       mfr:"samsung",  brand:"Samsung"},
+  {board:"r11q",      cpuMfr:"Qualcomm", cpu:"Snapdragon 778G",     dev:"r11q",         model:"SM-A526B",   name:"Galaxy A52s 5G",       mfr:"samsung",  brand:"Samsung"},
+  {board:"lahainap",  cpuMfr:"Qualcomm", cpu:"Snapdragon 8 Gen 1",  dev:"pa2",          model:"SM-S908B",   name:"Galaxy S22 Ultra",     mfr:"samsung",  brand:"Samsung"},
+  // Xiaomi
+  {board:"taro",      cpuMfr:"Qualcomm", cpu:"Snapdragon 8 Gen 1",  dev:"thor",         model:"2201123G",   name:"Xiaomi 12 Pro",        mfr:"Xiaomi",   brand:"Xiaomi"},
+  {board:"lahaina",   cpuMfr:"Qualcomm", cpu:"Snapdragon 888",      dev:"cas",          model:"M2007J3SG",  name:"Mi 11 Ultra",          mfr:"Xiaomi",   brand:"Xiaomi"},
+  {board:"kona",      cpuMfr:"Qualcomm", cpu:"Snapdragon 865",      dev:"umi",          model:"M2003J15SC", name:"Mi 10",                mfr:"Xiaomi",   brand:"Xiaomi"},
+  {board:"parrot",    cpuMfr:"Qualcomm", cpu:"Snapdragon 8+ Gen 1", dev:"ingres",       model:"22081212G",  name:"Xiaomi 12T Pro",       mfr:"Xiaomi",   brand:"Xiaomi"},
+  {board:"sm8550",    cpuMfr:"Qualcomm", cpu:"Snapdragon 8 Gen 2",  dev:"zizhan",       model:"23049PCD8G", name:"Xiaomi 13 Pro",        mfr:"Xiaomi",   brand:"Xiaomi"},
+  // Redmi
+  {board:"sm6375",    cpuMfr:"Qualcomm", cpu:"Snapdragon 695",      dev:"fire",         model:"22021211RG", name:"Redmi Note 11 Pro 5G", mfr:"Xiaomi",   brand:"Redmi"},
+  {board:"mt6769",    cpuMfr:"MediaTek", cpu:"Helio G96",           dev:"light",        model:"21091116AG", name:"Redmi Note 10 Pro",    mfr:"Xiaomi",   brand:"Redmi"},
+  {board:"mt6833",    cpuMfr:"MediaTek", cpu:"Dimensity 700",       dev:"evergo",       model:"21121119SG", name:"Redmi Note 11 5G",     mfr:"Xiaomi",   brand:"Redmi"},
+  {board:"mt6983",    cpuMfr:"MediaTek", cpu:"Dimensity 9000+",     dev:"diting",       model:"22127RK46G", name:"Redmi K60 Pro",        mfr:"Xiaomi",   brand:"Redmi"},
+  {board:"sm7325",    cpuMfr:"Qualcomm", cpu:"Snapdragon 778G",     dev:"corot",        model:"22071212AG", name:"Redmi Note 12 Turbo",  mfr:"Xiaomi",   brand:"Redmi"},
+  {board:"mt6769t",   cpuMfr:"MediaTek", cpu:"Helio G85",           dev:"wind",         model:"220733SG",   name:"Redmi 10A",            mfr:"Xiaomi",   brand:"Redmi"},
+  {board:"mt6762",    cpuMfr:"MediaTek", cpu:"Helio G25",           dev:"fog",          model:"220333QNY",  name:"Redmi 10C",            mfr:"Xiaomi",   brand:"Redmi"},
+  {board:"sm4350",    cpuMfr:"Qualcomm", cpu:"Snapdragon 680",      dev:"cezanne",      model:"2201117TG",  name:"Redmi Note 11",        mfr:"Xiaomi",   brand:"Redmi"},
+  {board:"mt6785",    cpuMfr:"MediaTek", cpu:"Helio G95",           dev:"picasso",      model:"M2004J19G",  name:"Redmi Note 9 Pro",     mfr:"Xiaomi",   brand:"Redmi"},
+  // POCO
+  {board:"mt6877",    cpuMfr:"MediaTek", cpu:"Dimensity 700",       dev:"yunlite",      model:"M2104K10G",  name:"POCO M3 Pro 5G",       mfr:"Xiaomi",   brand:"POCO"},
+  {board:"sm7325",    cpuMfr:"Qualcomm", cpu:"Snapdragon 778G",     dev:"veux",         model:"2201116SG",  name:"POCO X4 Pro 5G",       mfr:"Xiaomi",   brand:"POCO"},
+  {board:"sm8550",    cpuMfr:"Qualcomm", cpu:"Snapdragon 8 Gen 2",  dev:"marble",       model:"23013PC75G", name:"POCO F5",              mfr:"Xiaomi",   brand:"POCO"},
+  {board:"mt6893",    cpuMfr:"MediaTek", cpu:"Dimensity 1200",      dev:"miel",         model:"21051182G",  name:"POCO X3 GT",           mfr:"Xiaomi",   brand:"POCO"},
+  {board:"sm8475",    cpuMfr:"Qualcomm", cpu:"Snapdragon 8+ Gen 1", dev:"frost",        model:"22101320G",  name:"POCO F4 GT",           mfr:"Xiaomi",   brand:"POCO"},
+  // Google Pixel
+  {board:"redfin",    cpuMfr:"Qualcomm", cpu:"Snapdragon 765G",     dev:"redfin",       model:"Pixel 5",    name:"Pixel 5",              mfr:"Google",   brand:"Google"},
+  {board:"oriole",    cpuMfr:"Google",   cpu:"Tensor G1",           dev:"oriole",       model:"Pixel 6",    name:"Pixel 6",              mfr:"Google",   brand:"Google"},
+  {board:"raven",     cpuMfr:"Google",   cpu:"Tensor G1",           dev:"raven",        model:"Pixel 6 Pro",name:"Pixel 6 Pro",          mfr:"Google",   brand:"Google"},
+  {board:"cheetah",   cpuMfr:"Google",   cpu:"Tensor G2",           dev:"cheetah",      model:"Pixel 7 Pro",name:"Pixel 7 Pro",          mfr:"Google",   brand:"Google"},
+  {board:"panther",   cpuMfr:"Google",   cpu:"Tensor G2",           dev:"panther",      model:"Pixel 7",    name:"Pixel 7",              mfr:"Google",   brand:"Google"},
+  {board:"shiba",     cpuMfr:"Google",   cpu:"Tensor G3",           dev:"shiba",        model:"Pixel 8",    name:"Pixel 8",              mfr:"Google",   brand:"Google"},
+  {board:"husky",     cpuMfr:"Google",   cpu:"Tensor G3",           dev:"husky",        model:"Pixel 8 Pro",name:"Pixel 8 Pro",          mfr:"Google",   brand:"Google"},
+  {board:"felix",     cpuMfr:"Google",   cpu:"Tensor G2",           dev:"felix",        model:"Pixel Fold", name:"Pixel Fold",           mfr:"Google",   brand:"Google"},
+  // OnePlus
+  {board:"kona",      cpuMfr:"Qualcomm", cpu:"Snapdragon 865",      dev:"OnePlus8Pro",  model:"IN2023",     name:"OnePlus 8 Pro",        mfr:"OnePlus",  brand:"OnePlus"},
+  {board:"lahaina",   cpuMfr:"Qualcomm", cpu:"Snapdragon 888",      dev:"OnePlus9Pro",  model:"LE2125",     name:"OnePlus 9 Pro",        mfr:"OnePlus",  brand:"OnePlus"},
+  {board:"taro",      cpuMfr:"Qualcomm", cpu:"Snapdragon 8 Gen 1",  dev:"OnePlus10Pro", model:"NE2215",     name:"OnePlus 10 Pro",       mfr:"OnePlus",  brand:"OnePlus"},
+  {board:"sm8550",    cpuMfr:"Qualcomm", cpu:"Snapdragon 8 Gen 2",  dev:"OP5B56L1",     model:"CPH2449",    name:"OnePlus 11",           mfr:"OnePlus",  brand:"OnePlus"},
+  {board:"mt6893",    cpuMfr:"MediaTek", cpu:"Dimensity 1200",      dev:"OnePlusNord2", model:"DN2103",     name:"OnePlus Nord 2 5G",    mfr:"OnePlus",  brand:"OnePlus"},
+  // OPPO
+  {board:"taro",      cpuMfr:"Qualcomm", cpu:"Snapdragon 8 Gen 1",  dev:"OP4F5F",       model:"CPH2307",    name:"OPPO Find X5 Pro",     mfr:"OPPO",     brand:"OPPO"},
+  {board:"lahaina",   cpuMfr:"Qualcomm", cpu:"Snapdragon 888",      dev:"OP4A77",       model:"CPH2173",    name:"OPPO Find X3 Pro",     mfr:"OPPO",     brand:"OPPO"},
+  {board:"sm7325",    cpuMfr:"Qualcomm", cpu:"Snapdragon 778G",     dev:"OP4F51",       model:"CPH2339",    name:"OPPO Reno7 Pro 5G",    mfr:"OPPO",     brand:"OPPO"},
+  {board:"sm8550",    cpuMfr:"Qualcomm", cpu:"Snapdragon 8 Gen 2",  dev:"OP5929L1",     model:"CPH2525",    name:"OPPO Find X6 Pro",     mfr:"OPPO",     brand:"OPPO"},
+  // Vivo
+  {board:"lahaina",   cpuMfr:"Qualcomm", cpu:"Snapdragon 888",      dev:"V2025A",       model:"V2025A",     name:"vivo X70 Pro+",        mfr:"vivo",     brand:"Vivo"},
+  {board:"taro",      cpuMfr:"Qualcomm", cpu:"Snapdragon 8 Gen 1",  dev:"V2209A",       model:"V2209A",     name:"vivo X80 Pro",         mfr:"vivo",     brand:"Vivo"},
+  {board:"sm8550",    cpuMfr:"Qualcomm", cpu:"Snapdragon 8 Gen 2",  dev:"V2254A",       model:"V2254A",     name:"vivo X90 Pro+",        mfr:"vivo",     brand:"Vivo"},
+  {board:"mt6983",    cpuMfr:"MediaTek", cpu:"Dimensity 9000",      dev:"V2185A",       model:"V2185A",     name:"vivo X80",             mfr:"vivo",     brand:"Vivo"},
+  // Realme
+  {board:"lahaina",   cpuMfr:"Qualcomm", cpu:"Snapdragon 888",      dev:"RMX3461",      model:"RMX3461",    name:"realme GT2 Pro",       mfr:"realme",   brand:"Realme"},
+  {board:"mt6983",    cpuMfr:"MediaTek", cpu:"Dimensity 9000+",     dev:"RMX3687",      model:"RMX3687",    name:"realme GT Neo 5",      mfr:"realme",   brand:"Realme"},
+  {board:"sm7325",    cpuMfr:"Qualcomm", cpu:"Snapdragon 778G",     dev:"RMX3370",      model:"RMX3370",    name:"realme 9 Pro+",        mfr:"realme",   brand:"Realme"},
+  {board:"mt6877",    cpuMfr:"MediaTek", cpu:"Dimensity 810",       dev:"RMX3471",      model:"RMX3471",    name:"realme 9 5G",          mfr:"realme",   brand:"Realme"},
+  // Motorola
+  {board:"lahaina",   cpuMfr:"Qualcomm", cpu:"Snapdragon 888+",     dev:"burton",       model:"XT2173-3",   name:"Moto Edge 20 Pro",     mfr:"motorola", brand:"Motorola"},
+  {board:"sm8475",    cpuMfr:"Qualcomm", cpu:"Snapdragon 8+ Gen 1", dev:"tesla",        model:"XT2201-4",   name:"Moto Edge 30 Ultra",   mfr:"motorola", brand:"Motorola"},
+  {board:"sm8550",    cpuMfr:"Qualcomm", cpu:"Snapdragon 8 Gen 2",  dev:"eqs",          model:"XT2301-4",   name:"Moto Edge 40 Pro",     mfr:"motorola", brand:"Motorola"},
+  {board:"mt6769",    cpuMfr:"MediaTek", cpu:"Helio G85",           dev:"guam",         model:"XT2129-3",   name:"Moto G Play 2023",     mfr:"motorola", brand:"Motorola"},
+  // Sony
+  {board:"lahaina",   cpuMfr:"Qualcomm", cpu:"Snapdragon 888",      dev:"pdx215",       model:"XQ-BC52",    name:"Xperia 1 III",         mfr:"Sony",     brand:"Sony"},
+  {board:"taro",      cpuMfr:"Qualcomm", cpu:"Snapdragon 8 Gen 1",  dev:"pdx223",       model:"XQ-CT54",    name:"Xperia 1 IV",          mfr:"Sony",     brand:"Sony"},
+  {board:"sm8550",    cpuMfr:"Qualcomm", cpu:"Snapdragon 8 Gen 2",  dev:"pdx234",       model:"XQ-DQ54",    name:"Xperia 1 V",           mfr:"Sony",     brand:"Sony"},
+  {board:"sm7325",    cpuMfr:"Qualcomm", cpu:"Snapdragon 778G",     dev:"pdx225",       model:"XQ-BE52",    name:"Xperia 5 III",         mfr:"Sony",     brand:"Sony"},
+];
+
+const BRANDS=[...new Set(DB.map(d=>d.brand))].sort();
+const AV={PPR1:"9",QP1A:"10",RQ3A:"11",RP1A:"11",SD1A:"12",SP1A:"12",TP1A:"13",TP2A:"13",UP1A:"14"};
+const PFXS=["QP1A","RP1A","RP1A","SP1A","SP1A","TP1A","TP1A","TP2A","UP1A"];
+const HW={
+  "Snapdragon 855":"qcom","Snapdragon 865":"qcom","Snapdragon 865+":"qcom",
+  "Snapdragon 888":"qcom","Snapdragon 888+":"qcom","Snapdragon 8 Gen 1":"qcom",
+  "Snapdragon 8+ Gen 1":"qcom","Snapdragon 8 Gen 2":"qcom","Snapdragon 778G":"qcom",
+  "Snapdragon 695":"qcom","Snapdragon 765G":"qcom","Snapdragon 680":"qcom",
+  "Tensor G1":"google","Tensor G2":"google","Tensor G3":"google",
+  "Exynos 990":"exynos","Exynos 2100":"exynos","Exynos 2200":"exynos","Exynos 1280":"exynos",
+  "Helio G25":"mt6762","Helio G80":"mt6769t","Helio G85":"mt6769",
+  "Helio G95":"mt6785","Helio G96":"mt6781",
+  "Dimensity 700":"mt6833","Dimensity 810":"mt6879","Dimensity 1200":"mt6893",
+  "Dimensity 9000":"mt6983","Dimensity 9000+":"mt6983",
+};
+const BC={
+  Samsung:"#4d9fff",Xiaomi:"#ff8833",Redmi:"#ff6644",POCO:"#ffcc00",
+  Google:"#34a853",OnePlus:"#eb4134",OPPO:"#00bcd4",
+  Vivo:"#7986cb",Realme:"#ffc800",Motorola:"#00bc64",Sony:"#cc2200"
+};
+function bc(b){return BC[b]||"#00d4ff";}
+
+// unique generation — persistent via localStorage (survives reload/reopen)
+function loadSet(key){
+  try{return new Set(JSON.parse(localStorage.getItem(key)||"[]"));}catch(e){return new Set();}
+}
+function saveSet(key,set){
+  try{localStorage.setItem(key,JSON.stringify([...set]));}catch(e){}
+}
+const usedD=loadSet("adg_displays");
+const usedFP=loadSet("adg_fps");
+
+function ri(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+const CH="ABCDEFGHJKLMNPQRSTUVWXYZ0123456789";
+function ra(n){return Array.from({length:n},()=>CH[ri(0,CH.length-1)]).join("");}
+
+function uniqueDisplay(){
+  let id,t=0;
+  do{
+    const p=PFXS[ri(0,PFXS.length-1)];
+    const yy=ri(21,24),mm=String(ri(1,12)).padStart(2,"0"),dd=String(ri(1,28)).padStart(2,"0");
+    id=p+"."+yy+mm+"."+dd+"."+ra(6);
+    t++;
+  }while(usedD.has(id)&&t<500);
+  usedD.add(id);saveSet("adg_displays",usedD);return id;
+}
+
+function uniqueFP(d,did){
+  const ver=AV[did.split(".")[0]]||"13";
+  let fp,t=0;
+  do{
+    const keys=["release-keys","dev-keys","test-keys"][ri(0,2)];
+    fp=d.mfr+"/"+d.model+"/"+d.dev.toLowerCase()+":"+ver+"/"+did+"/"+ra(7)+":user/"+keys;
+    t++;
+  }while(usedFP.has(fp)&&t<500);
+  usedFP.add(fp);saveSet("adg_fps",usedFP);return fp;
+}
+
+// suggestions
+let sIdx=-1;
+function onType(){
+  const q=document.getElementById("bInput").value.trim().toLowerCase();
+  const box=document.getElementById("sugs");sIdx=-1;
+  if(!q){box.classList.remove("show");setHint("All");return;}
+  const m=BRANDS.filter(b=>b.toLowerCase().startsWith(q));
+  if(!m.length){box.classList.remove("show");return;}
+  box.innerHTML=m.map(b=>'<div class="sug" data-v="'+b+'" onmousedown="pick(\''+b+'\')">'+b+'</div>').join("");
+  box.classList.add("show");
+}
+function onKey(e){
+  const box=document.getElementById("sugs");
+  const items=box.querySelectorAll(".sug");
+  if(e.key==="ArrowDown"){sIdx=Math.min(sIdx+1,items.length-1);hilite(items);e.preventDefault();}
+  else if(e.key==="ArrowUp"){sIdx=Math.max(sIdx-1,0);hilite(items);e.preventDefault();}
+  else if(e.key==="Enter"){
+    if(sIdx>=0&&items[sIdx])pick(items[sIdx].dataset.v);
+    else{box.classList.remove("show");gen();}
+  }
+  else if(e.key==="Escape")box.classList.remove("show");
+}
+function hilite(items){items.forEach((el,i)=>el.classList.toggle("on",i===sIdx));}
+function pick(v){
+  document.getElementById("bInput").value=v;
+  document.getElementById("sugs").classList.remove("show");
+  setHint(v);
+}
+function setHint(v){
+  document.getElementById("hint").innerHTML='Brand: <span>'+(v||"All")+'</span> · Leave blank for all brands';
+}
+document.addEventListener("click",e=>{
+  if(!e.target.closest(".bwrap"))document.getElementById("sugs").classList.remove("show");
+});
+
+// Safe copy — Android Chrome compatible
+function safeCopy(text,btn,label){
+  const ta=document.createElement("textarea");
+  ta.value=text;
+  ta.setAttribute("readonly","");
+  ta.style.cssText="position:fixed;top:0;left:0;width:100px;height:40px;opacity:0.001;z-index:99999;font-size:16px;border:none;";
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.setSelectionRange(0,99999);
+  let ok=false;
+  try{ok=document.execCommand("copy");}catch(e){}
+  document.body.removeChild(ta);
+
+  function done(){
+    const orig=btn.textContent;
+    btn.textContent="✓"+(label?" "+label:"");btn.classList.add("ok");
+    setTimeout(()=>{btn.textContent=orig;btn.classList.remove("ok");},1400);
+    showToast("Copied!");
+  }
+
+  if(ok){
+    done();
+  }else if(navigator.clipboard&&window.isSecureContext){
+    navigator.clipboard.writeText(text).then(done).catch(done);
+  }else{
+    done();
+  }
+}
+
+document.addEventListener("click",function(e){
+  const btn=e.target.closest(".cp[data-val]");
+  if(!btn||btn.classList.contains("cp-all"))return;
+  safeCopy(btn.dataset.val,btn,"");
+});
+document.addEventListener("click",function(e){
+  const btn=e.target.closest(".cp-all");
+  if(!btn)return;
+  safeCopy(btn.closest(".card").dataset.all,btn,"Copied");
+});
+
+let total=0;
+function getPool(q){
+  if(!q.trim())return DB;
+  const lq=q.trim().toLowerCase();
+  return DB.filter(d=>
+    d.brand.toLowerCase().includes(lq)||
+    d.name.toLowerCase().includes(lq)||
+    d.mfr.toLowerCase().includes(lq)
+  );
+}
+
+function gen(){
+  const bv=document.getElementById("bInput").value;
+  const count=parseInt(document.getElementById("cnt").value);
+  const grid=document.getElementById("grid");
+  document.getElementById("sugs").classList.remove("show");
+  setHint(bv||"All");
+  const pool=getPool(bv);
+  if(!pool.length){showToast("No devices found: "+bv);return;}
+  const emp=grid.querySelector(".empty");
+  if(emp)emp.remove();
+
+  for(let i=0;i<count;i++){
+    const d=pool[ri(0,pool.length-1)];
+    const did=uniqueDisplay();
+    const fp=uniqueFP(d,did);
+    const hw=HW[d.cpu]||d.board;
+    const col=bc(d.brand);
+
+    const F=[
+      ["Board",           d.board,  ""],
+      ["Brand",           d.brand,  "hi"],
+      ["CPU Manufacturer",d.cpuMfr, ""],
+      ["CPU Model",       d.cpu,    "hi"],
+      ["Device",          d.dev,    ""],
+      ["Display ID",      did,      "hi"],
+      ["Fingerprint",     fp,       "fp"],
+      ["Hardware",        hw,       ""],
+      ["Manufacturer",    d.mfr,    ""],
+      ["Model",           d.model,  "hi"],
+      ["Name",            d.name,   ""],
+    ];
+
+    // Build rows safely - use data-val attribute, escaped for HTML
+    let rows="";
+    for(const [k,v,c] of F){
+      const safeV=v.replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+      rows+="<tr><td class='k'>"+k+"</td><td class='v "+c+"'>"+v+"</td><td class='ac'><button class='cp' data-val=\""+safeV+"\">copy</button></td></tr>";
+    }
+
+    const allText=F.map(([k,v])=>k+": "+v).join("\n");
+    const safeAll=allText.replace(/&/g,"&amp;").replace(/"/g,"&quot;");
+
+    const card=document.createElement("div");
+    card.className="card";
+    card.dataset.all=allText;
+    card.innerHTML=
+      '<div class="sl"></div>'+
+      '<div class="ch">'+
+        '<div style="display:flex;align-items:center;gap:10px;">'+
+          '<span class="cnum">#'+(total+i+1)+'</span>'+
+          '<div class="ct">'+d.name+'</div>'+
+        '</div>'+
+        '<span class="cbadge" style="background:'+col+'22;color:'+col+';border:1px solid '+col+'44;">'+d.brand+'</span>'+
+      '</div>'+
+      '<table>'+rows+'</table>'+
+      '<div class="cf"><button class="cp cp-all" style="font-size:.7rem;padding:5px 13px;">Copy All</button></div>';
+
+    grid.prepend(card);
+    total++;
+  }
+  document.getElementById("ctr").innerHTML="Generated: <b>"+total+"</b> devices this session";
+}
+
+function clr(){
+  document.getElementById("grid").innerHTML=
+    '<div class="empty"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">'+
+    '<rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>'+
+    'Type a brand name (or leave blank) then press Generate</div>';
+  usedD.clear();usedFP.clear();
+  saveSet("adg_displays",usedD);saveSet("adg_fps",usedFP);
+  total=0;
+  document.getElementById("ctr").innerHTML="Generated: <b>0</b> devices this session";
+}
+
+function showToast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg;t.classList.add("show");
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),1800);
+}
+</script>
+</body>
+</html>
